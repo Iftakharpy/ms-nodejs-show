@@ -49,9 +49,9 @@ router.get("/", (request, response) => {
   response.send(`${packageDescription.name} - v${packageDescription.version}`);
 });
 
-router.get("/accounts/:user", (request, response) => {
-  let user = request.params.user;
-  let userAccount = DB[user];
+router.get("/accounts/:userId", (request, response) => {
+  let userId = request.params.userId;
+  let userAccount = DB[userId];
   
   if (userAccount === undefined) {
     return response.status(404).json({ error: "User account does not exist!" });
@@ -94,4 +94,37 @@ router.post('/accounts', (request, response)=>{
   }
   DB[payload.userId] = account
   return response.json(account)
+})
+
+router.put('/accounts/:userId', (request, response)=>{
+  const payload = request.body
+  const userId = request.params.userId
+  let account = DB[userId]
+
+  // verify account exists
+  if (!account){
+    return response.status(404).json({error: 'Account does not exist'})
+  }
+
+  // restrict update fields
+  if (payload.userName||payload.balance||payload.transactions){
+    return response.status(400).json({error: 'Only currency and description are editable'})
+  }
+
+  if(payload.currency) account.currency = payload.currency
+  if(payload.description) account.description = payload.description
+
+  return response.send(account)
+})
+
+router.delete('/accounts/:userId', (request, response)=>{
+  const userId = request.params.userId
+  let account = DB[userId]
+  
+  if(!account){
+    return response.status(404).send({error: 'Account does not exist'})
+  }
+
+  delete(DB[userId])
+  return response.status(204).send({message: 'Account deleted'})
 })
